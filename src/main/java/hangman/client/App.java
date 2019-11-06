@@ -28,7 +28,7 @@ public class App {
             }
         }
         else {
-            System.err.println("No port was given!");
+            System.err.println("No address or port was given!");
             System.exit(1);
         }
 

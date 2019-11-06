@@ -44,7 +44,13 @@ public class ClientWorker extends Thread {
     }
 
     private void received() {
-
+        String message = "";
+        try {
+            message = this.in.readLine();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void send() {
