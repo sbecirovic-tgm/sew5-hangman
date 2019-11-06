@@ -6,16 +6,23 @@ plugins {
     id 'jacoco'
 }
 
+dependencies {
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.0'
+    compile group: 'commons-validator', name: 'commons-validator', version: '1.4.0'
+}
+
 task client(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     standardInput = System.in
     main = 'hangman.client.App'
+    args = ["localhost", "8888"]
 }
 
 task server(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     standardInput = System.in
     main = 'hangman.server.App'
+    args = ["8888"]
 }
 
 group 'dev.urbaniec.hangman'
