@@ -44,7 +44,8 @@ public class Server extends Thread {
         this.listening = true;
         while (listening) {
             try {
-                ServerWorker worker = new ServerWorker(socket.accept(), this);
+                String word = randomWord();
+                ServerWorker worker = new ServerWorker(socket.accept(), this, word, highScore(word));
                 workerList.add(worker);
                 executorService.execute(worker);
             } catch (Exception e) {
@@ -58,8 +59,8 @@ public class Server extends Thread {
         return words.get(rand);
     }
 
-    private synchronized int highScore(String word) throws IOException {
-        File tmp = new File(Thread.currentThread().getContextClassLoader().getResource("words.txt").toURI());
+    private synchronized int highScore(String word) throws IOException, URISyntaxException {
+        File tmp = new File(Thread.currentThread().getContextClassLoader().getResource("highscores.txt").toURI());
         List<String> highScore = FileUtils.readLines(tmp, "UTF-8");
         boolean found = false;
         int number = 1000;
@@ -73,23 +74,25 @@ public class Server extends Thread {
         if (!found) {
             PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(tmp, true)));
             out.println(word + "|" + number);
+            out.flush();
+            out.close();
         }
         return number;
     }
 
-    private synchronized void updateHighScore(String word, int number) throws IOException {
-        File tmp = new File(Thread.currentThread().getContextClassLoader().getResource("words.txt").toURI());
+    public synchronized void updateHighScore(String word, int number) throws IOException, URISyntaxException {
+        File tmp = new File(Thread.currentThread().getContextClassLoader().getResource("highscores.txt").toURI());
         List<String> highScore = FileUtils.readLines(tmp, "UTF-8");
-        for (String line: highScore) {
-            if (line.contains(word)) {
-                line = word + "|" + number + System.getProperty("line.separator");
+        for (int i = 0; i < highScore.size(); i++) {
+            if (highScore.get(i).contains(word)) {
+                highScore.set(i, word + "|" + number + System.getProperty("line.separator"));
             }
-            break;
         }
         FileWriter writer = new FileWriter(tmp, false);
         for (String line: highScore) {
             writer.write(line);
         }
+        writer.flush();
         writer.close();
     }
 

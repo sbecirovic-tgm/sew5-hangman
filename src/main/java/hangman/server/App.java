@@ -11,8 +11,8 @@ public class App {
         Integer port = 8888;
 
         if (args.length == 1) {
-            if (StringUtils.isNumeric(args[1])) {
-                port = Integer.parseInt(args[1]);
+            if (StringUtils.isNumeric(args[0])) {
+                port = Integer.parseInt(args[0]);
             } else {
                 System.err.println("The given port is invalid");
                 System.exit(1);

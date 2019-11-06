@@ -47,6 +47,10 @@ public class ClientWorker extends Thread {
         String message = "";
         try {
             message = this.in.readLine();
+            System.out.println(message);
+            if (message.contains("You lose!") || message.contains("You win!")) {
+                shutdown();
+            }
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -54,6 +58,10 @@ public class ClientWorker extends Thread {
     }
 
     private void send() {
+        if (this.listening)  this.out.println(sc.next());
+    }
 
+    private void shutdown() {
+        this.listening = false;
     }
 }
