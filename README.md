@@ -58,13 +58,13 @@ Erstelle ein Hangman-Spiel, wobei der Server als Spiele-Host fungiert!
 * Server
 
   ```
-  gradle server
+  gradle server [--args "port"]
   ```
 
 * Client
 
   ```
-  gradle client
+  gradle client [--args "ip-address" "port"]
   ```
 
   

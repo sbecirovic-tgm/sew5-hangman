@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 
@@ -22,7 +23,7 @@ public class ServerWorker implements Runnable {
     private char[] word;
     private char[] progress;
     private int highScore;
-    private int tries = 0;
+    private int tries = 1;
 
     ServerWorker(Socket socket, Server callback, String word, int highScore) {
         this.socket = socket;
@@ -42,7 +43,7 @@ public class ServerWorker implements Runnable {
         try {
             this.in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
             this.out = new PrintWriter(this.socket.getOutputStream(), true);
-            this.out.println((10-tries) + " remaining tries. " + String.valueOf(progress));
+            this.out.println((11-tries) + " remaining tries. " + String.valueOf(progress));
             this.listening = true;
             while (listening) {
                 String message = "";
@@ -55,11 +56,11 @@ public class ServerWorker implements Runnable {
                         if (tries < highScore) {
                             callback.updateHighScore(original, tries);
                         }
-                        this.listening = false;
+                        shutdown();
                     }
-                    if (tries > 9) {
+                    if (tries > 10) {
                         this.out.println("You lose! The word was " + String.valueOf(word));
-                        this.listening = false;
+                        shutdown();
                     }
                     else {
                         this.out.println((10-tries) + " remaining tries. " + String.valueOf(progress));
@@ -71,16 +72,18 @@ public class ServerWorker implements Runnable {
                         if (tries < highScore) {
                             callback.updateHighScore(original, tries);
                         }
-                        this.listening = false;
+                        shutdown();
                     }
                     else {
                         this.out.println("You lose! The word was " + String.valueOf(word));
-                        this.listening = false;
+                        shutdown();
                     }
                 }
             }
         } catch (IOException | URISyntaxException e) {
-            e.printStackTrace();
+            if (e instanceof SocketException) {
+                shutdown();
+            } else e.printStackTrace();
         }
     }
 
@@ -98,5 +101,19 @@ public class ServerWorker implements Runnable {
 
     private boolean answer(String guess) {
         return original.toUpperCase().equals(guess);
+    }
+
+    void shutdown() {
+        listening = false;
+        out.println("End!");
+        out.close();
+        try {
+            in.close();
+            socket.close();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        callback.removeWorker(this);
     }
 }

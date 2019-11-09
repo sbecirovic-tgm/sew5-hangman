@@ -4,13 +4,16 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 import java.net.ServerSocket;
+import java.net.SocketException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.Scanner;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Kacper Urbaniec
@@ -35,6 +38,7 @@ public class Server extends Thread {
     @Override
     public void run() {
         try {
+            new ServerHandler(this).start();
             socket = new ServerSocket(port);
             File tmp = new File(Thread.currentThread().getContextClassLoader().getResource("words.txt").toURI());
             words = (ArrayList<String>) FileUtils.readLines(tmp, "UTF-8");
@@ -49,7 +53,10 @@ public class Server extends Thread {
                 workerList.add(worker);
                 executorService.execute(worker);
             } catch (Exception e) {
-                e.printStackTrace();
+                if (e instanceof SocketException) {
+                    System.out.println("Socket closed");
+                }
+                else e.printStackTrace();
             }
         }
     }
@@ -63,7 +70,7 @@ public class Server extends Thread {
         File tmp = new File(Thread.currentThread().getContextClassLoader().getResource("highscores.txt").toURI());
         List<String> highScore = FileUtils.readLines(tmp, "UTF-8");
         boolean found = false;
-        int number = 1000;
+        int number = 999;
         for (String line: highScore) {
             if (line.contains(word)) {
                 String raw = line.split("\\|")[1];
@@ -73,14 +80,14 @@ public class Server extends Thread {
         }
         if (!found) {
             PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(tmp, true)));
-            out.println(word + "|" + number);
+            out.println(word + "|" + number + System.getProperty("line.separator"));
             out.flush();
             out.close();
         }
         return number;
     }
 
-    public synchronized void updateHighScore(String word, int number) throws IOException, URISyntaxException {
+    synchronized void updateHighScore(String word, int number) throws IOException, URISyntaxException {
         File tmp = new File(Thread.currentThread().getContextClassLoader().getResource("highscores.txt").toURI());
         List<String> highScore = FileUtils.readLines(tmp, "UTF-8");
         for (int i = 0; i < highScore.size(); i++) {
@@ -94,6 +101,59 @@ public class Server extends Thread {
         }
         writer.flush();
         writer.close();
+    }
+
+    void removeWorker(ServerWorker worker) {
+        workerList.remove(worker);
+    }
+
+    private void shutdown() {
+        listening = false;
+        try {
+            socket.close();
+        } catch (IOException e) {
+             e.printStackTrace();
+        }
+        for (ServerWorker worker: workerList) {
+            worker.shutdown();
+        }
+        executorService.shutdownNow();
+        try {
+            executorService.awaitTermination(1000, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            System.err.println("Could not properly stop server.");
+            System.err.println("Reason: ");
+            e.printStackTrace();
+        }
+    }
+
+    private class ServerHandler extends Thread {
+        private Server server;
+        private boolean listening;
+        private Scanner in;
+
+        public ServerHandler(Server server) {
+            this.server = server;
+            this.listening = true;
+            this.in = new Scanner(System.in);
+        }
+
+        @Override
+        public void run() {
+            while (listening) {
+                String cmd = in.next();
+                switch (cmd) {
+                    case "ls":
+                        System.out.println("Active sessions: " + server.workerList.size());
+                        break;
+                    case "shutdown":
+                        server.shutdown();
+                        listening = false;
+                        System.out.println("Shutting down server...");
+                        break;
+                }
+            }
+        }
     }
 
 }
