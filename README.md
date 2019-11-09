@@ -66,5 +66,11 @@ Erstelle ein Hangman-Spiel, wobei der Server als Spiele-Host fungiert!
   ```
   gradle client [--args "ip-address" "port"]
   ```
-
   
+## Build documentation
+```
+gradle javadoc
+```
+
+## Sources
+* [Scanner read input non-blocking](https://stackoverflow.com/a/48096648/12347616)

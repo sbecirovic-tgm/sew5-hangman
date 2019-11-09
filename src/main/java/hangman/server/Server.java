@@ -16,6 +16,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * This class represents the main thread of the server.
  * @author Kacper Urbaniec
  * @version 2019-11-06
  */
@@ -28,6 +29,10 @@ public class Server extends Thread {
     private ArrayList<String> words;
     private Random randomizer;
 
+    /**
+     * Creates a new server object.
+     * @param port  Integer value of the used port
+     */
     public Server(Integer port) {
         this.port = port;
         this.workerList = new CopyOnWriteArrayList<>();
@@ -35,6 +40,10 @@ public class Server extends Thread {
         this.randomizer = new Random();
     }
 
+    /**
+     * Listens on upcoming connection requests and creates new ServerWorkers for them.
+     * Also gives every worker a random word and the associated highscore.
+     */
     @Override
     public void run() {
         try {
@@ -61,11 +70,22 @@ public class Server extends Thread {
         }
     }
 
+    /**
+     * Returns a random word of the word list.
+     * @return  A random word
+     */
     private String randomWord() {
         int rand = randomizer.nextInt(words.size());
         return words.get(rand);
     }
 
+    /**
+     * Queries the associated highscore to a given word. If not highscore is found, 999 will be returned.
+     * @param word The word of which the highscore is looked for
+     * @return  The current highscore or 999
+     * @throws IOException
+     * @throws URISyntaxException
+     */
     private synchronized int highScore(String word) throws IOException, URISyntaxException {
         File tmp = new File(Thread.currentThread().getContextClassLoader().getResource("highscores.txt").toURI());
         List<String> highScore = FileUtils.readLines(tmp, "UTF-8");
@@ -87,6 +107,13 @@ public class Server extends Thread {
         return number;
     }
 
+    /**
+     * Updates the highscore of a word.
+     * @param word      The word, which highscore is updated
+     * @param number    The new highscore
+     * @throws IOException
+     * @throws URISyntaxException
+     */
     synchronized void updateHighScore(String word, int number) throws IOException, URISyntaxException {
         File tmp = new File(Thread.currentThread().getContextClassLoader().getResource("highscores.txt").toURI());
         List<String> highScore = FileUtils.readLines(tmp, "UTF-8");
@@ -103,10 +130,17 @@ public class Server extends Thread {
         writer.close();
     }
 
+    /**
+     * Removes a ServerWorker safely from the workerlist.
+     * @param worker Worker that needs to be removed
+     */
     void removeWorker(ServerWorker worker) {
         workerList.remove(worker);
     }
 
+    /**
+     * Gracefully shutdown worker.
+     */
     private void shutdown() {
         listening = false;
         try {
@@ -127,17 +161,29 @@ public class Server extends Thread {
         }
     }
 
+    /**
+     * This class is used to execute commands on the server.
+     */
     private class ServerHandler extends Thread {
         private Server server;
         private boolean listening;
         private Scanner in;
 
-        public ServerHandler(Server server) {
+        /**
+         * Creates new handler.
+         * @param server Server that is handled
+         */
+        ServerHandler(Server server) {
             this.server = server;
             this.listening = true;
             this.in = new Scanner(System.in);
         }
 
+        /**
+         * Waits for admin input.
+         * With `ls` the current workerlist can be queried.
+         * With `shutdown` the whole server can be gracefully shutdown.
+         */
         @Override
         public void run() {
             while (listening) {

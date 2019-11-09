@@ -7,9 +7,9 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.URISyntaxException;
-import java.util.Arrays;
 
 /**
+ * This class represents a worker that is used to receive and send messages to a hangman client.
  * @author Kacper Urbaniec
  * @version 2019-11-06
  */
@@ -25,7 +25,14 @@ public class ServerWorker implements Runnable {
     private int highScore;
     private int tries = 1;
 
-    ServerWorker(Socket socket, Server callback, String word, int highScore) {
+    /**
+     * Creates a new worker for the server.
+     * @param socket    Socket is for communication to the client
+     * @param callback  Instance of the main server thread
+     * @param word      The word the client needs to guess
+     * @param highScore The current highscore of the word
+     */
+    public ServerWorker(Socket socket, Server callback, String word, int highScore) {
         this.socket = socket;
         this.callback = callback;
         this.original = word;
@@ -38,6 +45,11 @@ public class ServerWorker implements Runnable {
         this.highScore = highScore;
     }
 
+    /**
+     * Listens to messages from the client and determines their correctness in the context of
+     * a hangman game.
+     * Also send the progress or end flag to the client.
+     */
     @Override
     public void run() {
         try {
@@ -87,6 +99,10 @@ public class ServerWorker implements Runnable {
         }
     }
 
+    /**
+     * Checks if a character is part of the searched word. If yes, the progress is updated.
+     * @param guess A character that needs to be checked if its part of the searched word
+     */
     private void turn(char guess) {
         for (int i = 0; i < word.length; i++) {
             if (word[i] == guess) {
@@ -95,14 +111,26 @@ public class ServerWorker implements Runnable {
         }
     }
 
+    /**
+     * Checks if the searched word was found yet.
+     * @return True if yes, else False
+     */
     private boolean done() {
         return answer(String.valueOf(progress));
     }
 
+    /**
+     * Checks if the searched word equals the given word.
+     * @param guess The word that needs to be checked if its equal to the searched word
+     * @return True if yes, else False
+     */
     private boolean answer(String guess) {
         return original.toUpperCase().equals(guess);
     }
 
+    /**
+     * Gracefully shutdown worker
+     */
     void shutdown() {
         listening = false;
         out.println("End!");
