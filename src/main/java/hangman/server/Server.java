@@ -100,7 +100,7 @@ public class Server extends Thread {
         }
         if (!found) {
             PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(tmp, true)));
-            out.println(word + "|" + number + System.getProperty("line.separator"));
+            out.println(word + "|" + number);
             out.flush();
             out.close();
         }
@@ -119,12 +119,12 @@ public class Server extends Thread {
         List<String> highScore = FileUtils.readLines(tmp, "UTF-8");
         for (int i = 0; i < highScore.size(); i++) {
             if (highScore.get(i).contains(word)) {
-                highScore.set(i, word + "|" + number + System.getProperty("line.separator"));
+                highScore.set(i, word + "|" + number);
             }
         }
         FileWriter writer = new FileWriter(tmp, false);
         for (String line: highScore) {
-            writer.write(line);
+            writer.write(line + System.getProperty("line.separator"));
         }
         writer.flush();
         writer.close();
