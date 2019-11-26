@@ -75,7 +75,7 @@ public class ServerWorker implements Runnable {
                         shutdown();
                     }
                     else {
-                        this.out.println((10-tries) + " remaining tries. " + String.valueOf(progress));
+                        this.out.println((11-tries) + " remaining tries. " + String.valueOf(progress));
                     }
                 }
                 else {
